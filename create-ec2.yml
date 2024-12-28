@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Launch EC2 instances in the specified subnets.
+# Author: Frank Ekwomadu. C
+
+Parameters:
+  SubnetType:
+    Type: String
+    AllowedValues:
+      - Public
+      - Private
+    Default: Public
+    Description: Choose whether the EC2 instance is launched in a public or private subnet.
+  PublicSubnetId:
+    Type: String
+    Description: Subnet ID for the public EC2 instance.
+  PrivateSubnetId:
+    Type: String
+    Description: Subnet ID for the private EC2 instance.
+  SecurityGroupId:
+    Type: String
+    Description: Security group ID to associate with the EC2 instances.
+  InstanceType:
+    Type: String
+    Default: t2.micro
+
+Conditions:
+  UsePublicSubnet: !Equals [!Ref SubnetType, Public]
+
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SubnetId: !If [UsePublicSubnet, !Ref PublicSubnetId, !Ref PrivateSubnetId]
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      ImageId: ami-0453ec754f44f9a4a # Change this if you reuse the code
+      Tags:
+        - Key: Name
+          Value: !Sub "EC2-${SubnetType}Instance"
+
+Outputs:
+  EC2InstanceId:
+    Value: !Ref EC2Instance
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstanceId"
